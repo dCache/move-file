@@ -1,0 +1,181 @@
+<link rel="import" href="../polymer/polymer.html">
+
+<link rel="import" href="../iron-list/iron-list.html">
+<link rel="import" href="../file-icon/file-icon.html">
+<dom-module id="mv-ls">
+    <template>
+        <style>
+            :host {
+                display: block;
+                max-height: 100vh;
+                display: flex;
+                flex-direction: column;
+            }
+            iron-list {
+                flex: 1 1 auto;
+            }
+            .item {
+                text-decoration: none !important;
+                background-color: white;
+                cursor:pointer;
+		    }
+            .item:hover {
+                background-color: #e9e9e9;
+            }
+            .item.selected {
+                background-color: #2196F3;
+                color: #fafafa;
+                outline: 0;
+            }
+        </style>
+        <p>{{contentMessage}}</p>
+        <iron-list class="flex" items="[[directories]]" selected-items="{{selectedItems}}" selection-enabled>
+            <template>
+                <ls-file class$="[[_computedClass(selected)]]" current-path$="[[path]]"
+                            name$="[[item.fileName]]" mime-type$="[[item.fileMimeType]]"></ls-file>
+            </template>
+            
+        </iron-list>
+    </template>
+    <script>
+        MsLs = Polymer({
+            is: 'mv-ls',
+            properties: {
+                path: {
+                    type: String,
+                    notify: true
+                },
+                directories: {
+                    type: Array,
+                    notify: true,
+                    observer:'__changedData'
+                },
+                selectedItems:{
+                    type: Object,
+                    notify: true,
+                    observer:'__selectedItemsChanged'
+                },
+                noDir:{type:Number},
+                contentMessage: {
+                    type:String,
+                    computed: '__computedMessage(noDir)'
+                }
+            },
+            factoryImpl: function(path,directories) {
+                this.path = path;
+                this.directories = directories;
+                this.noDir = directories.length;
+            },
+            __changedData: function(){
+                this.querySelector('iron-list').fire('iron-resize');
+            },
+            _computedClass: function(isSelected)
+			{
+				var classes = 'item';
+				if (isSelected) {
+					classes += ' selected';
+				}
+				this.updateStyles();
+				return classes;
+			},
+            __selectedItemsChanged: function(n,o)
+            {                
+                var a = document.querySelector('move-file');
+                if (n != null || n != undefined || a._startingPath != a.currentPath) {
+                    a.querySelector('#moveBtn').disabled = false;
+                }
+                if (n == null && a._startingPath == a.currentPath){
+                    a.querySelector('#moveBtn').disabled = true;
+                }
+            },
+            __computedMessage: function(n)
+            {
+                if (n == 0){
+                    this.querySelector('p').style.textAlign = "center";
+                    return "No folder in this directory";
+                } else if (n == 1){
+                    return "There is 1 folder in this directory";;
+                } else {
+                    return "There are " + n + " folders in this directory";
+                }
+            },
+        });
+    </script>
+</dom-module>
+
+<dom-module id="ls-file">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+            .flex {
+                flex: 1 1 auto;
+            }
+            #file {
+                display: flex;
+                height: 40px;
+                align-items: center;
+                border-bottom: 1px solid #e5e5e5;
+            }
+            file-icon {
+                margin-right: 18px; 
+                margin-left: 5px;
+            }
+            #open {
+                visibility: hidden;
+            }
+        </style>
+        <div id="file">
+            <file-icon mime-type="[[mimeType]]"></file-icon>
+            <span class="flex">[[name]]</span>
+            <paper-icon-button id="open" icon="move-icons:open" on-tap="_open"></paper-icon-button>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is : 'ls-file',
+            properties: {
+                name: {
+                    type: String
+                },
+                mimeType: {
+                    type: String
+                },
+                currentPath:{
+                    type: String
+                }
+            },
+            attached:function()
+            {
+                this.listen(this.$.open, 'tap', '_open');
+                this.listen(this, 'dblclick', '_open');
+                this.listen(this, 'mouseover', '_mouseOver');
+                this.listen(this, 'mouseleave', '_mouseLeave');
+            },
+            detached: function()
+            {
+                this.unlisten(this.$.open, 'tap', '_open');
+                this.unlisten(this, 'dblclick', '_open');
+                this.unlisten(this, 'mouseover', '_mouseOver');
+                this.unlisten(this, 'mouseleave', '_mouseLeave');
+            },
+            _open: function(e)
+            {
+                var a = document.querySelector('move-file');
+                var path = this.currentPath=="/" ? "/" + this.name: this.currentPath + "/" + this.name;
+                a.__getData(path);
+            },
+            _mouseOver: function(e)
+            {
+                this.$.open.style.visibility = "visible";
+                this.updateStyles();
+            },
+            _mouseLeave: function(e)
+            {
+                this.$.open.style.visibility = "hidden";
+                this.updateStyles();
+            },
+        })
+    </script>
+</dom-module>
