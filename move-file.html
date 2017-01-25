@@ -9,6 +9,8 @@
 <link rel="import" href="../paper-toolbar/paper-toolbar.html">
 <link rel="import" href="../paper-spinner/paper-spinner.html">
 <link rel="import" href="../paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../paper-fab/paper-fab.html">
+
 <!--
 `move-file`
 Use to move a file in dcache-view
@@ -54,13 +56,20 @@ Use to move a file in dcache-view
             paper-toolbar {
                 box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.3);
                 font-size: 18px;
-                --paper-toolbar-background: #009688;
+                --paper-toolbar-background: #616161;
             }
             #createBtn{
-                color:#2196F3;
+                position:absolute;
+                top: 83%;
+                left: 24px;
+                bottom: auto;
+                right: auto;
+                z-index:4;
+                --paper-fab-background: #009688;
+                --paper-fab-keyboard-focus-background: #009688;
             }
             #moveBtn {
-                background-color: #009688;
+                background-color: #2196F3;
                 color: white;
             }
             #moveBtn[disabled] {
@@ -68,7 +77,7 @@ Use to move a file in dcache-view
                 color: white;
             }
             #cancelBtn {
-                color: #009688;
+                color: #2196F3;
             }
         </style>
         <div>
@@ -81,12 +90,10 @@ Use to move a file in dcache-view
                 <paper-spinner active="{{loading}}"></paper-spinner>
                 <div id="listHolder"></div>
             </div>
+            <paper-fab id="createBtn" icon="move-icons:create-dir" 
+                    title="create new directory" on-tap="create"></paper-fab>
             <div class="buttons">
                 <paper-button id="cancelBtn" on-tap="_close">Cancel</paper-button>
-                <span class="flex"></span>
-                <!-- TODO: Move the create button to a fav-->
-                <!--<paper-icon-button id="createBtn" icon="move-icons:create-dir" on-tap="create"></paper-icon-button>
-                <paper-tooltip for="createBtn">create new directory</paper-tooltip>-->
                 <paper-button id="moveBtn" on-tap="move" disabled>Move here</paper-button>
                 
             </div>
@@ -115,6 +122,14 @@ Use to move a file in dcache-view
                 },
                 mvFiles: {
                     type: Array
+                },
+                auth: {
+                    type: String,
+                    value: function (){
+                        return sessionStorage.upauth==null 
+                                ? 'YW5vbnltb3VzOm5vcGFzc3dvcmQ':sessionStorage.upauth;
+                    },
+                    notify: true
                 }
             },
             ready: function()
@@ -142,7 +157,6 @@ Use to move a file in dcache-view
                     var pt = li==0 ? "/": x.substring(0, li);
                     this.__getData(pt);
                 }
-                
             },
             _getDirectoryName: function(path)
             {
@@ -154,8 +168,7 @@ Use to move a file in dcache-view
                 this.currentPath = path;
                 var namespace = document.createElement('span');
                 namespace = document.createElement('dcache-namespace');
-                namespace.auth = sessionStorage.upauth==null 
-                    ? 'YW5vbnltb3VzOm5vcGFzc3dvcmQ':sessionStorage.upauth;
+                namespace.auth = this.auth;
                 var d = this;
                 namespace.ls({
                     url: d.restOrigin == null ? location.origin: d.restOrigin,
@@ -191,10 +204,8 @@ Use to move a file in dcache-view
             _removeMovingItems: function(arr) 
             {
                 this.mvFiles.forEach(function(el) {
-                    
                     if (el.fileType == "DIR") {
-                        var index = 
-                                arr.findIndex(x => (x.fileName===el.fileName));
+                        var index = arr.findIndex(x => (x.fileName===el.fileName));
                         if (index != -1) {
                             arr.splice(index, 1);
                         }
@@ -222,11 +233,11 @@ Use to move a file in dcache-view
                 var destFolder = Polymer.dom(this.root).querySelector('mv-ls').selectedItems;
                 var dest = destFolder == null? this.currentPath : this.currentPath + "/"+destFolder.fileName;
                 var namespace = document.createElement('dcache-namespace');
-                namespace.auth = sessionStorage.upauth==null 
-                    ? 'YW5vbnltb3VzOm5vcGFzc3dvcmQ':sessionStorage.upauth;
+                namespace.auth = this.auth;
                 var d = this;
                 namespace.mv({
-                    url: d.restOrigin == null ? location.origin + "/api/v1/namespace"+ path : d.restOrigin+ "/api/v1/namespace" + path,
+                    url: d.restOrigin == null ? location.origin + "/api/v1/namespace"+ path : 
+                        d.restOrigin+ "/api/v1/namespace" + path,
                     destination: dest
                 });
                 namespace.promise.then(
@@ -242,15 +253,42 @@ Use to move a file in dcache-view
             },
             create: function()
             {
-                //TODO: Laying foundation for create new directory button
                 this.querySelector('#moveBtn').disabled = true;
                 this.querySelector('#createBtn').disabled = true;
                 var c = document.createElement("create-directory");
+                var lsHolder = Polymer.dom(this.root).querySelector('#listHolder');
+                var d = this; 
                 c.dirFullPath = this.currentPath;
-                c.addEventListener('create',function(e) {});
-                c.addEventListener('close',function(e) {});
-                Polymer.dom(this.root).querySelector('#listHolder').innerHTML = ""
-                Polymer.dom(this.root).querySelector('#listHolder').appendChild(c);
+                c.addEventListener('create',function(e) {
+                    var name = e.detail.newFolderName;
+                    var namespace = document.createElement('dcache-namespace');
+                    namespace.auth = d.auth;
+                    namespace.promise.then(
+                        function (r) {
+                            lsHolder.innerHTML = "";
+                            d.querySelector('#createBtn').disabled = false;
+                            var path = d.currentPath == "/" ? "/"+name : d.currentPath + "/"+name;
+                            d.__getData(path);
+                        }
+                    ).catch(
+                        function (err) {
+                            d._handleError(err);
+                            d._moveErrorHandler(err);
+                        }
+                    );
+                    namespace.mkdir({
+                        url: d.restOrigin == null ? location.origin + "/api/v1/namespace"+ c.dirFullPath : 
+                            d.restOrigin+ "/api/v1/namespace" + c.dirFullPath,
+                        name: name
+                    });
+                });
+                c.addEventListener('close',function(e) {
+                    lsHolder.innerHTML = "";
+                    d.querySelector('#createBtn').disabled = false; 
+                    d.__getData(this.dirFullPath);
+                });
+                lsHolder.innerHTML = "";
+                lsHolder.appendChild(c);
             },
             __currentPathChanged: function(n,o)
             {
@@ -281,7 +319,7 @@ Use to move a file in dcache-view
                 Polymer.dom(this.root).querySelector('#listHolder').innerHTML = "";
                 Polymer.dom(this.root).querySelector('#listHolder').appendChild(div);
                 this.querySelector('#moveBtn').disabled = true;
-                //this.querySelector('#createBtn').disabled = true;
+                this.querySelector('#createBtn').disabled = true;
             },
 
             /**
