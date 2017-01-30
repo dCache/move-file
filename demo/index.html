@@ -54,6 +54,9 @@
               mv.addEventListener('error', function (e) {
                 console.log(e.detail.error);
               });
+              mv.addEventListener('dismiss', function (e) {
+                x.close();
+              });
               x.appendChild(mv);
               x.open();
             }

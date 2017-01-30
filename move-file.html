@@ -84,7 +84,7 @@ Use to move a file in dcache-view
             <paper-toolbar>
                 <paper-icon-button id="backBtn" icon="move-icons:back" on-tap="back"></paper-icon-button>
                 <span class="title">{{currentDirecroryName}}</span>
-                <paper-icon-button icon="move-icons:close" dialog-dismiss></paper-icon-button>
+                <paper-icon-button icon="move-icons:close" on-tap="_close"></paper-icon-button>
             </paper-toolbar>
             <div id="content">
                 <paper-spinner active="{{loading}}"></paper-spinner>
@@ -346,6 +346,13 @@ Use to move a file in dcache-view
             {
                 this.fire('move-create', {name: e});
             },
+            /**
+             * @event dismiss
+             */
+            _close: function(e)
+            {
+                this.fire('dismiss', {e: e});
+            }
         });
     </script>
 </dom-module>
