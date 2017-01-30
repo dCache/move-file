@@ -69,7 +69,7 @@ Use to move a file in dcache-view
                 --paper-fab-keyboard-focus-background: #009688;
             }
             #moveBtn {
-                background-color: #2196F3;
+                background-color: #00b395;
                 color: white;
             }
             #moveBtn[disabled] {
@@ -77,7 +77,7 @@ Use to move a file in dcache-view
                 color: white;
             }
             #cancelBtn {
-                color: #2196F3;
+                color: #00796B;
             }
         </style>
         <div>
@@ -224,14 +224,15 @@ Use to move a file in dcache-view
             {
                 var d = this;
                 this.mvFiles.forEach(function(el) {
-                    var path = d._startingPath=="/"? "/"+el.fileName: + d._startingPath +"/"+el.fileName;
-                    d._move(path);
+                    d._move(el.fileName);
                 })
             },
-            _move: function(path)
+            _move: function(name)
             {
+                var path = this._startingPath == "/"? "/" + name : this._startingPath + "/" + name;
                 var destFolder = Polymer.dom(this.root).querySelector('mv-ls').selectedItems;
-                var dest = destFolder == null? this.currentPath : this.currentPath + "/"+destFolder.fileName;
+                var dest = destFolder == null ?
+                            this.currentPath + "/" + name : this.currentPath + "/"+destFolder.fileName + "/" + name;
                 var namespace = document.createElement('dcache-namespace');
                 namespace.auth = this.auth;
                 var d = this;
@@ -268,6 +269,9 @@ Use to move a file in dcache-view
                             lsHolder.innerHTML = "";
                             d.querySelector('#createBtn').disabled = false;
                             var path = d.currentPath == "/" ? "/"+name : d.currentPath + "/"+name;
+                            if (d.currentPath == d._startingPath) {
+                                d._moveCreateHandler(name);
+                            }
                             d.__getData(path);
                         }
                     ).catch(
@@ -321,7 +325,6 @@ Use to move a file in dcache-view
                 this.querySelector('#moveBtn').disabled = true;
                 this.querySelector('#createBtn').disabled = true;
             },
-
             /**
              * @event move
              */
@@ -329,13 +332,19 @@ Use to move a file in dcache-view
             {
                 this.fire('move', {response: e});
             },
-
             /**
              * @event error
              */
             _moveErrorHandler: function(e)
             {
                 this.fire('error', {error: e});
+            },
+            /**
+             * @event move-create
+             */
+            _moveCreateHandler: function(e)
+            {
+                this.fire('move-create', {name: e});
             },
         });
     </script>
