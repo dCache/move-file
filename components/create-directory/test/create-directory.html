@@ -1,0 +1,125 @@
+<!doctype html>
+
+<html>
+  <head>
+    <title>create-directory test</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+    <script src="../../iron-test-helpers/mock-interactions.js"></script>
+
+    <link rel="import" href="../create-directory.html">
+    <link rel="import" href="../demo/x-dialog.html">
+  </head>
+  <body>
+
+    <test-fixture id="basic">
+      <template>
+        <create-directory></create-directory>
+      </template>
+    </test-fixture>
+
+    <test-fixture id="directory-name">
+      <template>
+        <create-directory dir-full-path="/abc/def/ghi"></create-directory>
+      </template>
+    </test-fixture>
+
+    <test-fixture id="events">
+      <template>
+        <create-directory dir-full-path="/abc/def/ghi"></create-directory>
+      </template>
+    </test-fixture>
+
+    <test-fixture id="close">
+      <template>
+        <x-dialog id="dialog">
+          <create-directory></create-directory>
+        </x-dialog>
+      </template>
+    </test-fixture>
+
+    <script>
+      suite('basic', function() {
+
+        test('instantiating the element works', function() {
+          var mkdir = fixture('basic');
+          assert.equal(mkdir.is, 'create-directory');
+        });
+
+        test('extract directory name', function() {
+          var mkdir = fixture('directory-name');
+          assert.equal(mkdir.currentDirName, 'ghi');
+        });
+
+        test('typed input bind with newFolderName property of create-directory ', function() {
+          var mkdir = fixture('basic');
+          mkdir.newFolderName = "dcache";
+          var input = Polymer.dom(mkdir.root).querySelector('paper-input');
+          assert.equal(input.value, 'dcache');
+        });
+      });
+
+      suite('event listners and create button', function(){
+        var mkdir;
+        setup(function() {
+          mkdir = fixture('events');
+        });
+        
+        test('triggered the create event with the enter key', function(done) {
+          mkdir.newFolderName = "tape";
+          mkdir.addEventListener('create', function() {
+            done();
+          });
+
+          /*Polymer.Base.async(function() {
+            MockInteractions.pressEnter(mkdir.parentNode);
+          });*/
+          MockInteractions.pressEnter(mkdir);
+        });
+
+        test('click the create button with the new folder name', function(done) {
+          var button = Polymer.dom(mkdir.root).querySelector('#createBtn');
+          mkdir.newFolderName = "tape";
+          mkdir.addEventListener('create', function() {
+            done();
+          });
+          
+          MockInteractions.tap(button);
+        });
+
+        test('click the create button without the new folder name', function(done) {
+          var button = Polymer.dom(mkdir.root).querySelector('#createBtn');
+          MockInteractions.tap(button);
+          expect(mkdir.message).to.be.equal("Folder name can not be empty or contain forward slash!");
+          done();
+        });
+      });
+
+      suite('escape key, close and cancel button', function(){
+        var dialog;
+        var mkdir;
+        setup(function() {
+          dialog = fixture('close');
+          mkdir = dialog.querySelector('create-directory');
+        });
+        
+        test('click the cancel button', function() {
+          var button = Polymer.dom(mkdir.root).querySelector('#cancelBtn');
+          MockInteractions.tap(button);
+        });
+
+        test('click the close button', function() {
+          var button = Polymer.dom(mkdir.root).querySelector('#closeBtn');
+          console.info(button);
+          MockInteractions.tap(button);
+        });
+
+        test('triggered the close event with the escape key', function() {
+          MockInteractions.pressAndReleaseKeyOn(dialog, 27);  
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,142 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../iron-meta/iron-meta.html">
+<link rel="import" href="file-icons.html">
+
+<!--
+The `file-icon` element displays an file icon based on the 
+supplied file's' MIME type.
+
+@demo demo/index.html 
+-->
+<dom-module id="file-icon">
+    <template>
+        <style>
+            :host {
+                @apply(--layout-inline);
+                @apply(--layout-center-center);
+                position: relative;
+                vertical-align: middle;
+                fill: inherit;
+                stroke: none;
+                width: 24px;
+                height: 24px;
+            }
+        </style>
+    </template>
+
+    <script>
+        Polymer({
+            is: 'file-icon',
+
+            properties: {
+                /**
+                 * file MIME type
+                 * @type {String}
+                 */
+                mimeType: {
+                    type: String,
+                },
+
+                /**
+                 * @type {!Polymer.IronMeta}
+                 */
+                _meta: {
+                    value: Polymer.Base.create('iron-meta', {type: 'iconset'})
+                }
+            },
+
+            observers: [
+                '_updateIcon(mimeType)'
+            ],
+
+            ready: function()
+            {
+                if (this.mimeType === undefined){
+                    this.style.fill = "#ccc";
+                    this._iconName = "unknown";
+                    this._iconset = this._meta.byKey('files');
+                    this._iconset.applyIcon(this, this._iconName);
+                    this.updateStyles();
+                    this.unlisten(window, 'iron-iconset-added', '_updateIcon');
+                }
+            },
+            _updateIcon: function(mimeType) 
+            {
+                if (mimeType.startsWith("video/")) {
+                    this.style.fill = "#a49f63";
+                    this._iconName = "video";
+                } else if (mimeType.startsWith("audio/")) {
+                    this.style.fill = "#38d8bc";
+                    this._iconName = "audio";
+                } else if (mimeType.startsWith("image/")) {
+                    if (mimeType.substring(mimeType.lastIndexOf('/')+1, mimeType.length) == "gif") {
+                        this._iconName = "gif";
+                        this.style.fill = "#cc68c0";
+                    } else {
+                        this.style.fill = "#cc68c0";
+                        this._iconName = "image";
+                    }
+                } else if (mimeType.startsWith("text/")) {
+                    this.style.fill = "#747474";
+                    this._iconName = "text";
+                } else if (mimeType.startsWith("application/")) {
+                    var subtype = mimeType.substring(mimeType.lastIndexOf('/')+1, mimeType.length);
+                    switch(subtype.toLowerCase()) {
+                        case "zip":
+                        case "x-tar":
+                        case "x-bzip":
+                        case "x-bzip2":
+                        case "x-compressed-zip":
+                        case "x-rar-compressed":
+                        case "x-7z-compressed":
+                            this.style.fill = "#575757";
+                            this._iconName = "compressed";
+                            break;
+                        case "pdf":
+                            this._iconName = "pdf";
+                            this.style.fill = "#ff1313";
+                            break;
+                        case "vnd.ms-excel":
+                        case "vnd.oasis.opendocument.spreadsheet":
+                        case "vnd.ms-excel.sheet.binary.macroEnabled.12":
+                        case "vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+                        case "vnd.openxmlformats-officedocument.spreadsheetml.template":
+                            this.style.fill = "#88c7cc";
+                            this._iconName = "spreadsheet";
+                            break;
+                        case "msword":
+                        case "vnd.oasis.opendocument.text":
+                        case "vnd.openxmlformats-officedocument.wordprocessingml.document":
+                            this.style.fill = "#1e90ff";
+                            this._iconName = "text";
+                            break;
+                        case "vnd.dcache.folder":
+                            this._iconName = "folder";
+                            this.style.fill = "#4FC3F7";
+                            break;
+                        case "vnd.dcache.link":
+                            this._iconName = "link";
+                            this.style.fill = "#3E2723";
+                            break;
+                        case "vnd.dcache.special":
+                            this._iconName = "special";
+                            this.style.fill = "#FFC107";
+                            break;
+                        case "octet-stream":
+                        default:
+                            this.style.fill = "#ccc";
+                            this._iconName = "unknown";
+                    }
+                } else {
+                    this.style.fill = "#ccc";
+                    this._iconName = "unknown";
+                }
+                this._iconset = this._meta.byKey('files');
+                this._iconset.applyIcon(this, this._iconName);
+                this.updateStyles();
+                this.unlisten(window, 'iron-iconset-added', '_updateIcon');
+            }
+        });
+    </script>
+</dom-module>

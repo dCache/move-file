@@ -1,0 +1,26 @@
+{
+  "name": "dcache-namespace",
+  "description": "A javascript class created for dcache-view and which main purpose is to make an ajax call to dcache.",
+  "main": "dcache-namespace.html",
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.4.0",
+    "promise-polyfill": "polymerlabs/promise-polyfill#^1.0.0"
+  },
+  "devDependencies": {
+    "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
+    "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^1.0.0",
+    "web-component-tester": "^4.0.0",
+    "webcomponentsjs": "webcomponents/webcomponentsjs#^0.7.0"
+  },
+  "homepage": "https://github.com/dcache-elements/dcache-namespace",
+  "version": "0.0.3",
+  "_release": "0.0.3",
+  "_resolution": {
+    "type": "version",
+    "tag": "v0.0.3",
+    "commit": "f740f469c39ec5cc245b7b679a1d922885069a37"
+  },
+  "_source": "https://github.com/dcache-elements/dcache-namespace.git",
+  "_target": "^0.0.3",
+  "_originalSource": "dcache-elements/dcache-namespace"
+}

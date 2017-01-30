@@ -1,0 +1,70 @@
+<!doctype html>
+
+<html>
+  <head>
+    <title>file-type-icon test</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+
+    <link rel="import" href="../file-icon.html">
+  </head>
+  <body>
+
+    <test-fixture id="basic">
+      <template>
+        <file-icon></file-icon>
+      </template>
+    </test-fixture>
+
+    <test-fixture id="noMime">
+      <template>
+        <file-icon mime-type=""></file-icon>
+      </template>
+    </test-fixture>
+
+    <test-fixture id="defaultStyling">
+      <template>
+        <file-icon mime-type="application/pdf"></file-icon>
+      </template>
+    </test-fixture>
+
+    <script>
+      suite('file-icon', function() {
+        var element_1;
+        var element_2;
+
+        setup(function() {
+          element_1 = fixture('basic');
+          element_2 = fixture('noMime');
+        });
+
+        test('instantiating the element works', function() {
+          assert.equal(element_1.is, 'file-icon');
+        });
+
+        test('when no mime-type is setted or provided', function() {
+          expect(element_1._iconName).to.be.eql(element_1._iconName);
+          assert.equal(element_2._iconName, 'unknown');
+        });
+
+      });
+
+      suite('check the default styling of the file-icon', function() {
+        var element;
+        
+        setup(function() {
+          element = fixture('defaultStyling');
+        });
+
+        test('checking the default style', function() {
+          var style = document.defaultView.getComputedStyle(element, null);
+          expect(element.style.fill).to.be.eql('rgb(255, 19, 19)');
+          expect(style.width).to.be.eql('24px');
+          expect(style.height).to.be.eql('24px');
+        });
+      })
+    </script>
+  </body>
+</html>

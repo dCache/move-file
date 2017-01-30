@@ -1,0 +1,217 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../iron-a11y-keys/iron-a11y-keys.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="create-directory-icons.html">
+
+<!--
+`create-directory`
+A form for creating a directory using iron-ajax
+
+@demo demo/index.html 
+-->
+
+<dom-module id="create-directory">
+  <template>
+    <style>
+      :host {
+        display: block;
+        width: 100hv;
+      }
+      .headerContainer {
+        display: flex;
+        height: 50px;
+        align-items: center;
+        border-bottom: 1px solid #d6d6d6;
+        margin-bottom: 20px;
+        background-color: #fff;
+        color: #333;
+      }
+      .flex {
+        flex-grow: 1;
+      }
+      .flex2 {
+        flex-grow: 2;
+      }
+      paper-input [prefix] {
+        margin-right: 13px !important;
+      }
+      .buttons{
+        display: flex;
+        height:50px;
+        align-items: center;
+        justify-content: flex-end;
+      }
+      #createBtn{
+        background-color: #3284e1;
+        color: white !important;
+      }
+      paper-button {
+        text-transform: capitalize !important;
+      }
+    </style>
+    <div>
+      <div class="headerContainer">
+        <div class="flex"><h3>Create new directory</h3></div>
+        <span class="flex2"></span>
+        <paper-icon-button id="closeBtn" icon="close" on-tap="_closeHandler"></paper-icon-button>
+      </div>
+      <div>
+        <div class="flex">
+          <iron-a11y-keys target="[[target]]" keys="esc enter" on-keys-pressed="_action"></iron-a11y-keys>
+          <span>
+            This new folder will be created inside the 
+            <code style="color: red;">[[currentDirName]]</code> directory
+          </span>
+          <paper-input id="newFolderNameInput" label="folder name" 
+                        value="{{newFolderName::input}}" auto-validate pattern="[^/]*" 
+                        error-message="[[message]]" 
+                        required preventInvalidInput tabindex="1" autofocus>
+            <iron-icon icon="folder" prefix></iron-icon>
+          </paper-input>
+        </div>
+        <br>
+        <div class="buttons">
+          <paper-button id="cancelBtn" on-tap="_closeHandler" raised>Cancel</paper-button>
+          <paper-button id="createBtn" on-tap="_createHandler" raised>Create</paper-button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'create-directory',
+
+      properties: {
+        /**
+         * The parent full path for the new directory to be created.
+         * @attribute dir-full-path
+         * @type {String}
+         */
+        dirFullPath: {
+          type: String,
+          notify: true
+        },
+
+        /**
+         * The parent name of the parent directory where the new folder
+         * will reside. The value of this property will be extrapolated
+         * from the `dirFullPath` property.
+         * @type {String}
+         * @private
+         */
+        currentDirName: {
+          type: String,
+          computed: '_computeDirName(dirFullPath)'
+        },
+
+        /**
+         * The name of the new folder to be created.
+         * @attribute new-folder-name
+         * @type {String}
+         */
+        newFolderName: {
+          type: String,
+          notify: true,
+        },
+
+        /**
+         * @private
+         * type {object}
+         */
+        target: {
+          type: Object,
+          value: function() {
+            return document.body;
+          }
+        },
+
+        /**
+         * @attribute message
+         * type {String}
+         */
+        message: {
+          type: String,
+          notify: true,
+        }
+      },
+
+      observers: [
+        '_errorTrigger(newFolderName)'
+      ],
+
+      /* @private*/
+      _errorTrigger: function(newFolderName) {
+        this.__sanityCheck(newFolderName, true);
+      },
+
+      /* @private*/
+      __sanityCheck: function(x, y) {
+        if (y) {
+          if (x == null || x == "" || x.includes("/")) {
+            this.message = 'Folder name can not be empty or contain forward slash!';
+            return true;
+          }
+          return false
+        } else {
+          if (x == null || x == "") {
+            this.message = "Specify the full path of the current directory.";
+            return true;
+          }
+          return false
+        }
+      },
+
+      /**
+       * Determine the directory name from the directory full path.
+       * type {Function}
+       * @Private
+       */
+      _computeDirName: function(dirFullPath) {
+       if (this.__sanityCheck(dirFullPath, false) == true) {
+         return;
+       }
+
+        switch (dirFullPath) {
+          case "/":
+            return "root";
+          default:
+            dirFullPath.endsWith("/")
+              ? dirFullPath = dirFullPath.slice(0,-1): dirFullPath;
+            return dirFullPath.substring(dirFullPath.lastIndexOf("/")+1, dirFullPath.length);
+        }
+      },
+
+      /**
+       * The `Enter` key will fire the `create` eventlistner and the Escape 
+       *  key excute the `close` eventlistner.
+       */
+      _action: function(e)
+      {
+        e.detail.combo == 'enter' ? this._createHandler(e) : this._closeHandler(e);
+      },
+
+      /**
+       * @event create
+       */
+      _createHandler: function(e) 
+      {
+        if (this.__sanityCheck(this.newFolderName, true) == false) {
+          this.fire('create', {newFolderName: this.newFolderName});
+        }
+      },
+
+      /**
+       * @event close
+       */
+      _closeHandler: function(e) 
+      {
+        this.fire('close', {});
+      }
+    });
+  </script>
+</dom-module>

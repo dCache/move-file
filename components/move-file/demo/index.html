@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+    <title>move-file demo</title>
+
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+    <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+    <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+    <link rel="import" href="../../paper-icon-button/paper-icon-button.html">
+    <link rel="import" href="../move-icons.html">
+    <link rel="import" href="../move-file.html">
+    <link rel="import" href="x-dialog.html">
+
+    <style is="custom-style" include="demo-pages-shared-styles">
+    </style>
+  </head>
+  <body>
+    <div class="vertical-section-container centered">
+      <h3>Basic move-file demo</h3>
+      <demo-snippet>
+        <template>
+          <button onclick="move()">Move</button>
+          <x-dialog id="dialog" modal></x-dialog>
+          <script>
+            function move(){
+              var x = document.querySelector('#dialog');
+              x.innerHTML = "";
+              var mv = document.createElement("move-file");
+              mv.currentPath = "/";
+              mv.mvFiles = [{
+                  "fileName" : "lost+found",
+                  "fileMimeType" : "application/vnd.dcache.folder",
+                  "mtime" : 1485234044497,
+                  "fileType" : "DIR",
+                  "size" : 512,
+                  "creationTime" : 1485234044497
+                }, {
+                  "fileName" : "VOs",
+                  "fileMimeType" : "application/vnd.dcache.folder",
+                  "mtime" : 1485234064969,
+                  "fileType" : "DIR",
+                  "size" : 512,
+                  "creationTime" : 1485234063085
+                }];
+              mv.restOrigin = "https://prometheus.desy.de:3880";
+
+              mv.addEventListener('move', function (e) {
+                console.log(e.detail.response);
+              });
+              mv.addEventListener('error', function (e) {
+                console.log(e.detail.error);
+              });
+              mv.addEventListener('dismiss', function (e) {
+                x.close();
+              });
+              x.appendChild(mv);
+              x.open();
+            }
+            
+          </script>
+        </template>
+      </demo-snippet>
+    </div>
+  </body>
+</html>

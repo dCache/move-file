@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+  <head>
+    <title>file-type-icon demo</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+    <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+    <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+
+    <link rel="import" href="../file-icon.html">
+
+    <style is="custom-style" include="demo-pages-shared-styles">
+    </style>
+    <style>
+      
+    </style>
+  </head>
+  <body>
+
+    <div class="vertical-section-container centered">
+      <h3>file-icons</h3>
+      <demo-snippet>
+        <template>
+          <file-icon mime-type="image/gif"></file-icon>
+          <file-icon mime-type="image/png"></file-icon>
+          <file-icon mime-type="application/pdf"></file-icon>
+          <file-icon mime-type="audio/mp3"></file-icon>
+          <file-icon mime-type="video/mp4"></file-icon>
+          <file-icon mime-type="application/vnd.ms-excel"></file-icon>
+          <file-icon></file-icon>
+        </template>
+      </demo-snippet>
+
+      <h3>file-icons with styling</h3>
+      <demo-snippet>
+        <template>
+          <style>
+            .pdf {
+              fill: green !important;
+              width: 60px;
+              height: 60px;
+            }
+          </style>
+          <file-icon class="pdf" mime-type="application/pdf"></file-icon>
+          <file-icon mime-type="application/pdf"></file-icon>
+        </template>
+      </demo-snippet>
+    </div>
+  </body>
+</html>

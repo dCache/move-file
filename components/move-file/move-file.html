@@ -1,0 +1,358 @@
+<link rel="import" href="../polymer/polymer.html">
+
+<link rel="import" href="mv-ls.html">
+<link rel="import" href="move-icons.html">
+<link rel="import" href="../create-directory/create-directory.html">
+<link rel="import" href="../dcache-namespace/dcache-namespace.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../paper-spinner/paper-spinner.html">
+<link rel="import" href="../paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../paper-fab/paper-fab.html">
+
+<!--
+`move-file`
+Use to move a file in dcache-view
+
+@demo demo/index.html 
+-->
+
+<dom-module id="move-file">
+    <template>
+        <style>
+            :host {
+                display: block;
+                margin: 0 -24px !important;
+                width: 400px;
+            }
+            .title {
+                text-align: center !important;
+            }
+            .buttons {
+                background-color: #eaeaea;
+                display: flex;
+            }
+            #content {
+                padding:5px 24px;
+                min-height: 300px;
+                max-height: 300px;
+                overflow-y: scroll !important;
+            }
+            .flex {
+                flex: 1 1 auto;
+            }
+            paper-button {
+                text-transform: none !important;
+            }
+            paper-spinner {
+                position:absolute;
+                top: 50%;
+                right: 50%;
+                bottom: auto;
+                left: auto;
+                z-index:4;
+            }
+            paper-toolbar {
+                box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.3);
+                font-size: 18px;
+                --paper-toolbar-background: #616161;
+            }
+            #createBtn{
+                position:absolute;
+                top: 83%;
+                left: 24px;
+                bottom: auto;
+                right: auto;
+                z-index:4;
+                --paper-fab-background: #009688;
+                --paper-fab-keyboard-focus-background: #009688;
+            }
+            #moveBtn {
+                background-color: #00b395;
+                color: white;
+            }
+            #moveBtn[disabled] {
+                background-color: #e0e0e0;
+                color: white;
+            }
+            #cancelBtn {
+                color: #00796B;
+            }
+        </style>
+        <div>
+            <paper-toolbar>
+                <paper-icon-button id="backBtn" icon="move-icons:back" on-tap="back"></paper-icon-button>
+                <span class="title">{{currentDirecroryName}}</span>
+                <paper-icon-button icon="move-icons:close" on-tap="_close"></paper-icon-button>
+            </paper-toolbar>
+            <div id="content">
+                <paper-spinner active="{{loading}}"></paper-spinner>
+                <div id="listHolder"></div>
+            </div>
+            <paper-fab id="createBtn" icon="move-icons:create-dir" 
+                    title="create new directory" on-tap="create"></paper-fab>
+            <div class="buttons">
+                <paper-button id="cancelBtn" on-tap="_close">Cancel</paper-button>
+                <paper-button id="moveBtn" on-tap="move" disabled>Move here</paper-button>
+                
+            </div>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'move-file',
+            properties: {
+                
+                currentPath: {
+                    type: String,
+                    notify: true,
+                    observer:'__currentPathChanged'
+                },
+                currentDirecroryName: {
+                    type: String,
+                    computed: '_getDirectoryName(currentPath)'
+                },
+                restOrigin: {
+                    type: String
+                },
+                data: {
+                    type: Array,
+                    observer:'__changedData'
+                },
+                mvFiles: {
+                    type: Array
+                },
+                auth: {
+                    type: String,
+                    value: function (){
+                        return sessionStorage.upauth==null 
+                                ? 'YW5vbnltb3VzOm5vcGFzc3dvcmQ':sessionStorage.upauth;
+                    },
+                    notify: true
+                }
+            },
+            ready: function()
+            {
+                this.loading=true;
+
+                Polymer.RenderStatus.afterNextRender(this, () => {
+                    this._startingPath = this.currentPath;
+                    this.$.moveBtn.disabled = true;
+                    if (this.data == null || this.data === undefined) {
+                        this.__getData(this.currentPath);   
+                    } else {
+                        var ls = new MsLs(this.currentPath,this.data);
+                        Polymer.dom(this.root).querySelector('#listHolder').appendChild(ls);
+                        this.loading=false;
+                    }
+                });
+            },
+            back: function()
+            {
+                if (this.currentPath != "/") {
+                    this.loading=true;
+                    var x = this.currentPath;
+                    var li = x.lastIndexOf("/");
+                    var pt = li==0 ? "/": x.substring(0, li);
+                    this.__getData(pt);
+                }
+            },
+            _getDirectoryName: function(path)
+            {
+                return (path == "/") ? "Root" : path.substring(path.lastIndexOf("/")+1, path.length);
+            },
+
+            __getData: function(path)
+            {
+                this.currentPath = path;
+                var namespace = document.createElement('span');
+                namespace = document.createElement('dcache-namespace');
+                namespace.auth = this.auth;
+                var d = this;
+                namespace.ls({
+                    url: d.restOrigin == null ? location.origin: d.restOrigin,
+                    path: path,
+                    children: true
+                });
+                namespace.promise.then(
+                    function (request) {
+                        var children = [];
+                        children = request.response.children;
+                        d._isDir(children);
+                    }
+                ).catch(
+                    function (err) {
+                        d._handleError(err);
+                    }
+                );
+                namespace = document.createElement('span');
+            },
+            _isDir: function(arr)
+            {
+                var z = [];
+                z = arr.filter(this._lsDirFilter);
+                if (this._startingPath == this.currentPath) {
+                    z = this._removeMovingItems(z);
+                }
+                this.data = z;
+            },
+            _lsDirFilter: function(item)
+            {
+                return item.fileType == "DIR" ? true: false;
+            },
+            _removeMovingItems: function(arr) 
+            {
+                this.mvFiles.forEach(function(el) {
+                    if (el.fileType == "DIR") {
+                        var index = arr.findIndex(x => (x.fileName===el.fileName));
+                        if (index != -1) {
+                            arr.splice(index, 1);
+                        }
+                    }
+                });
+                return arr;
+            },
+            __changedData: function(n,o)
+            {
+                var ls = new MsLs(this.currentPath,n);
+                Polymer.dom(this.root).querySelector('#listHolder').innerHTML = ""
+                Polymer.dom(this.root).querySelector('#listHolder').appendChild(ls);
+                this.loading = false;
+            },
+            move: function()
+            {
+                var d = this;
+                this.mvFiles.forEach(function(el) {
+                    d._move(el.fileName);
+                })
+            },
+            _move: function(name)
+            {
+                var path = this._startingPath == "/"? "/" + name : this._startingPath + "/" + name;
+                var destFolder = Polymer.dom(this.root).querySelector('mv-ls').selectedItems;
+                var dest = destFolder == null ?
+                            this.currentPath + "/" + name : this.currentPath + "/"+destFolder.fileName + "/" + name;
+                var namespace = document.createElement('dcache-namespace');
+                namespace.auth = this.auth;
+                var d = this;
+                namespace.mv({
+                    url: d.restOrigin == null ? location.origin + "/api/v1/namespace"+ path : 
+                        d.restOrigin+ "/api/v1/namespace" + path,
+                    destination: dest
+                });
+                namespace.promise.then(
+                    function (request) {
+                        d._moveHandler(request);
+                    }
+                ).catch(
+                    function (err) {
+                        d._handleError(err); //FIXME: not correct, tidy up later.
+                        d._moveErrorHandler(err);
+                    }
+                );
+            },
+            create: function()
+            {
+                this.querySelector('#moveBtn').disabled = true;
+                this.querySelector('#createBtn').disabled = true;
+                var c = document.createElement("create-directory");
+                var lsHolder = Polymer.dom(this.root).querySelector('#listHolder');
+                var d = this; 
+                c.dirFullPath = this.currentPath;
+                c.addEventListener('create',function(e) {
+                    var name = e.detail.newFolderName;
+                    var namespace = document.createElement('dcache-namespace');
+                    namespace.auth = d.auth;
+                    namespace.promise.then(
+                        function (r) {
+                            lsHolder.innerHTML = "";
+                            d.querySelector('#createBtn').disabled = false;
+                            var path = d.currentPath == "/" ? "/"+name : d.currentPath + "/"+name;
+                            if (d.currentPath == d._startingPath) {
+                                d._moveCreateHandler(name);
+                            }
+                            d.__getData(path);
+                        }
+                    ).catch(
+                        function (err) {
+                            d._handleError(err);
+                            d._moveErrorHandler(err);
+                        }
+                    );
+                    namespace.mkdir({
+                        url: d.restOrigin == null ? location.origin + "/api/v1/namespace"+ c.dirFullPath : 
+                            d.restOrigin+ "/api/v1/namespace" + c.dirFullPath,
+                        name: name
+                    });
+                });
+                c.addEventListener('close',function(e) {
+                    lsHolder.innerHTML = "";
+                    d.querySelector('#createBtn').disabled = false; 
+                    d.__getData(this.dirFullPath);
+                });
+                lsHolder.innerHTML = "";
+                lsHolder.appendChild(c);
+            },
+            __currentPathChanged: function(n,o)
+            {
+                var b = Polymer.dom(this.root).querySelector('mv-ls') == null ? null :
+                    Polymer.dom(this.root).querySelector('mv-ls').selectedItems;
+                if (this._startingPath == n && b == null) {
+                    this.$.moveBtn.disabled = true;
+                } else {
+                    this.$.moveBtn.disabled = false;
+                }
+                if (n == "/") {
+                    this.$.backBtn.style.visibility = "hidden";
+                } else {
+                    this.$.backBtn.style.visibility = "visible";
+                }
+            },
+            _handleError: function(err)
+            {
+                var div = document.createElement("div");
+                var h3 = document.createElement("h3");
+                h3.innerHTML = "Something is really wrong with your current request :(";
+                h3.style.marginTop = "30px";
+                div.style.textAlign = "center";
+                div.appendChild(h3);
+                var code = document.createElement("code");
+                code.innerHTML = err.toString();
+                div.appendChild(code);
+                Polymer.dom(this.root).querySelector('#listHolder').innerHTML = "";
+                Polymer.dom(this.root).querySelector('#listHolder').appendChild(div);
+                this.querySelector('#moveBtn').disabled = true;
+                this.querySelector('#createBtn').disabled = true;
+            },
+            /**
+             * @event move
+             */
+            _moveHandler: function(e)
+            {
+                this.fire('move', {response: e});
+            },
+            /**
+             * @event error
+             */
+            _moveErrorHandler: function(e)
+            {
+                this.fire('error', {error: e});
+            },
+            /**
+             * @event move-create
+             */
+            _moveCreateHandler: function(e)
+            {
+                this.fire('move-create', {name: e});
+            },
+            /**
+             * @event dismiss
+             */
+            _close: function(e)
+            {
+                this.fire('dismiss', {e: e});
+            }
+        });
+    </script>
+</dom-module>

@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+  <head>
+    <title>create-directory demo</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+    <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+    <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+
+    <link rel="import" href="../create-directory.html">
+    <link rel="import" href="x-dialog.html">
+
+    <style is="custom-style" include="demo-pages-shared-styles">
+    </style>
+  </head>
+  <body>
+
+    <div class="vertical-section-container centered">
+      <h3>Demo: use `create-directory` element inside a custom dialog box</h3>
+      <demo-snippet>
+        <template>
+          <button onclick="openDialog()">Open</button>
+          <x-dialog id="dialog"></x-dialog>
+          <script>
+            function openDialog() {
+              var x = document.querySelector('#dialog');
+              var c = document.createElement("create-directory");
+              c.dirFullPath = "/abc/def";
+              c.addEventListener('create',function(e) {
+                console.log("creating...");
+              });
+              c.addEventListener('close',function(e) {
+                console.log("closing...");
+                x.close();
+              });
+              x.appendChild(c);
+              x.open();
+            }
+          </script>
+        </template>
+      </demo-snippet>
+    </div>
+    <script>
+      //Solution for autofocus problem: 
+      //http://stackoverflow.com/questions/31600258/autofocus-paper-input-in-a-paper-dialog-works-only-once
+      window.addEventListener('iron-overlay-opened', function(event) {
+        var input = event.target.querySelector('[autofocus]');
+        switch(input.tagName.toLowerCase()) {
+          case 'input':
+              input.focus();
+              break;
+          case 'paper-textarea':
+          case 'paper-input':
+              input.$.input.focus();
+              break;
+        }
+      });
+    </script>
+  </body>
+</html>
