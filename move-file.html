@@ -183,7 +183,7 @@ Use to move a file in dcache-view
                     }
                 ).catch(
                     function (err) {
-                        d._handleError(err);
+                        d._handleError(err.message);
                     }
                 );
                 namespace = document.createElement('span');
@@ -237,8 +237,9 @@ Use to move a file in dcache-view
                 namespace.auth = this.auth;
                 var d = this;
                 namespace.mv({
-                    url: d.restOrigin == null ? location.origin + "/api/v1/namespace"+ path : 
-                        d.restOrigin+ "/api/v1/namespace" + path,
+                    url: d.restOrigin == null ? location.origin + "/api/v1/namespace" : 
+                        d.restOrigin+ "/api/v1/namespace",
+                    path: path,
                     destination: dest
                 });
                 namespace.promise.then(
@@ -247,8 +248,8 @@ Use to move a file in dcache-view
                     }
                 ).catch(
                     function (err) {
-                        d._handleError(err); //FIXME: not correct, tidy up later.
-                        d._moveErrorHandler(err);
+                        d._handleError(err.message); //FIXME: not correct, tidy up later.
+                        d._moveErrorHandler(err.message);
                     }
                 );
             },
@@ -276,13 +277,14 @@ Use to move a file in dcache-view
                         }
                     ).catch(
                         function (err) {
-                            d._handleError(err);
-                            d._moveErrorHandler(err);
+                            d._handleError(err.message);
+                            d._moveErrorHandler(err.message);
                         }
                     );
                     namespace.mkdir({
-                        url: d.restOrigin == null ? location.origin + "/api/v1/namespace"+ c.dirFullPath : 
-                            d.restOrigin+ "/api/v1/namespace" + c.dirFullPath,
+                        url: d.restOrigin == null ? location.origin + "/api/v1/namespace" : 
+                            d.restOrigin+ "/api/v1/namespace",
+                        path: c.dirFullPath,
                         name: name
                     });
                 });
@@ -318,7 +320,7 @@ Use to move a file in dcache-view
                 div.style.textAlign = "center";
                 div.appendChild(h3);
                 var code = document.createElement("code");
-                code.innerHTML = err.toString();
+                code.innerHTML = err;
                 div.appendChild(code);
                 Polymer.dom(this.root).querySelector('#listHolder').innerHTML = "";
                 Polymer.dom(this.root).querySelector('#listHolder').appendChild(div);
