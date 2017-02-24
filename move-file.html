@@ -166,8 +166,7 @@ Use to move a file in dcache-view
             __getData: function(path)
             {
                 this.currentPath = path;
-                var namespace = document.createElement('span');
-                namespace = document.createElement('dcache-namespace');
+                var namespace = document.createElement('dcache-namespace');
                 namespace.auth = this.auth;
                 var d = this;
                 namespace.ls({
@@ -199,7 +198,7 @@ Use to move a file in dcache-view
             },
             _lsDirFilter: function(item)
             {
-                return item.fileType == "DIR" ? true: false;
+                return item.fileType == "DIR";
             },
             _removeMovingItems: function(arr) 
             {
@@ -243,8 +242,11 @@ Use to move a file in dcache-view
                     destination: dest
                 });
                 namespace.promise.then(
-                    function (request) {
-                        d._moveHandler(request);
+                    () => {
+                        let x = destFolder == null ? this.currentPath : this.currentPath + "/"+destFolder.fileName;
+                        let res = {sourceDirName: this._getDirectoryName(this._startingPath), 
+                            targetDirName: this._getDirectoryName(x)};
+                        this._moveHandler(res);
                     }
                 ).catch(
                     function (err) {
