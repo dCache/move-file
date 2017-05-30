@@ -123,12 +123,13 @@ Use to move a file in dcache-view
                 mvFiles: {
                     type: Array
                 },
+
+                /**
+                 * e.g.:
+                 * auth = 'Basic YW5vbnltb3VzOm5vcGFzc3dvcmQ'
+                 */
                 auth: {
                     type: String,
-                    value: function (){
-                        return sessionStorage.upauth==null 
-                                ? 'YW5vbnltb3VzOm5vcGFzc3dvcmQ':sessionStorage.upauth;
-                    },
                     notify: true
                 }
             },
