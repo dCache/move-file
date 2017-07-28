@@ -31,8 +31,9 @@
         <p>{{contentMessage}}</p>
         <iron-list class="flex" items="[[directories]]" selected-items="{{selectedItems}}" selection-enabled>
             <template>
-                <ls-file class$="[[_computedClass(selected)]]" current-path$="[[path]]"
-                        name$="[[item.fileName]]" mime-type$="[[item.fileMimeType]]"></ls-file>
+                <ls-file class$="[[_computedClass(selected)]]" 
+                        current-path$="[[path]]" name$="[[item.fileName]]" 
+                        mime-type$="[[item.fileMimeType]]" selected="[[selected]]"></ls-file>
             </template>
             
         </iron-list>
@@ -118,17 +119,22 @@
                 align-items: center;
                 border-bottom: 1px solid #e5e5e5;
             }
-            file-icon {
+            .mv-file-icon {
                 margin-right: 18px; 
                 margin-left: 5px;
-                fill: rgb(97,97,97) !important;
+            }
+            .unselected {
+                fill: rgb(79, 195, 247) !important;
+            }
+            .selected {
+                fill: #fff !important;
             }
             #open {
                 visibility: hidden;
             }
         </style>
         <div id="file">
-            <file-icon mime-type="[[mimeType]]"></file-icon>
+            <file-icon class$="[[_computedClass(selected)]]" mime-type="[[mimeType]]"></file-icon>
             <span class="flex">[[name]]</span>
             <paper-icon-button id="open" icon="move-icons:open" on-tap="_open"></paper-icon-button>
         </div>
@@ -145,6 +151,10 @@
                 },
                 currentPath:{
                     type: String
+                },
+                selected:{
+                    type: Boolean,
+                    notify: true
                 }
             },
             attached:function()
@@ -177,6 +187,17 @@
                 this.$.open.style.visibility = "hidden";
                 this.updateStyles();
             },
+            _computedClass: function(isSelected)
+            {
+                let classes = 'mv-file-icon'
+                if (isSelected) {
+                    classes += ' selected';
+                } else {
+                    classes += ' unselected';
+                }
+                this.updateStyles();
+				return classes;
+            }
         })
     </script>
 </dom-module>
