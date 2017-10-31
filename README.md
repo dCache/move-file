@@ -1,6 +1,6 @@
-[![Build status](https://travis-ci.org/dcache-elements/move-file.svg?branch=master)](https://travis-ci.org/dcache-elements/move-file)
+[![Build status](https://travis-ci.org/dCacheElements/move-file.svg?branch=master)](https://travis-ci.org/dCacheElements/move-file)
 
-_[Demo and API docs](https://dcache-elements.github.io/move-file/components/move-file/)_
+_[Demo and API docs](https://dCacheElements.github.io/move-file/components/move-file/)_
 
 # \<move-file\>
 
