@@ -1,4 +1,4 @@
-<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../polymer/polymer-element.html">
 
 <link rel="import" href="mv-ls.html">
 <link rel="import" href="move-icons.html">
@@ -6,7 +6,7 @@
 <link rel="import" href="../dcache-namespace/dcache-namespace.html">
 <link rel="import" href="../paper-button/paper-button.html">
 <link rel="import" href="../paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../paper-toolbar/paper-toolbar.html">
+<link rel="import" href="../app-layout/app-toolbar/app-toolbar.html">
 <link rel="import" href="../paper-spinner/paper-spinner.html">
 <link rel="import" href="../paper-tooltip/paper-tooltip.html">
 <link rel="import" href="../paper-fab/paper-fab.html">
@@ -32,6 +32,16 @@ Use to move a file in dcache-view
             .buttons {
                 background-color: #eaeaea;
                 display: flex;
+                position: relative;
+                padding: 8px 8px 8px 24px;
+                margin: 0;
+                display: flex;
+                -ms-flex-direction: row;
+                -webkit-flex-direction: row;
+                flex-direction: row;
+                -ms-flex-pack: end;
+                -webkit-justify-content: flex-end;
+                justify-content: flex-end;
             }
             #content {
                 padding:5px 24px;
@@ -53,10 +63,11 @@ Use to move a file in dcache-view
                 left: auto;
                 z-index:4;
             }
-            paper-toolbar {
+            app-toolbar {
                 box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.3);
-                font-size: 18px;
-                --paper-toolbar-background: #616161;
+                --app-toolbar-font-size: 18px;
+                color: white;
+                background: #616161;
             }
             #createBtn{
                 position:absolute;
@@ -81,11 +92,11 @@ Use to move a file in dcache-view
             }
         </style>
         <div>
-            <paper-toolbar>
+            <app-toolbar>
                 <paper-icon-button id="backBtn" icon="move-icons:back" on-tap="back"></paper-icon-button>
-                <span class="title">{{currentDirecroryName}}</span>
+                <div class="title" main-title>{{currentDirecroryName}}</div>
                 <paper-icon-button icon="move-icons:close" on-tap="_close"></paper-icon-button>
-            </paper-toolbar>
+            </app-toolbar>
             <div id="content">
                 <paper-spinner active="{{loading}}"></paper-spinner>
                 <div id="listHolder"></div>
@@ -93,48 +104,62 @@ Use to move a file in dcache-view
             <paper-fab id="createBtn" icon="move-icons:create-dir" 
                     title="create new directory" on-tap="create"></paper-fab>
             <div class="buttons">
-                <paper-button id="moveBtn" on-tap="move" disabled>Move</paper-button>
-                
+                <paper-button id="cancelBtn" on-tap="_close">Cancel</paper-button>
+                <paper-button id="moveBtn" on-tap="move" disabled>Move here</paper-button>
             </div>
         </div>
     </template>
     <script>
-        Polymer({
-            is: 'move-file',
-            properties: {
-                
-                currentPath: {
-                    type: String,
-                    notify: true,
-                    observer:'__currentPathChanged'
-                },
-                currentDirecroryName: {
-                    type: String,
-                    computed: '_getDirectoryName(currentPath)'
-                },
-                restOrigin: {
-                    type: String
-                },
-                data: {
-                    type: Array,
-                    observer:'__changedData'
-                },
-                mvFiles: {
-                    type: Array
-                },
-
-                /**
-                 * e.g.:
-                 * auth = 'Basic YW5vbnltb3VzOm5vcGFzc3dvcmQ'
-                 */
-                auth: {
-                    type: String,
-                    notify: true
-                }
-            },
-            ready: function()
+        class MoveFile extends Polymer.Element
+        {
+            constructor()
             {
-                this.loading=true;
+                super();
+            }
+            static get is()
+            {
+                return "move-file";
+            }
+            static get properties()
+            {
+                return {
+                    currentPath: {
+                        type: String,
+                        notify: true,
+                        observer:'__currentPathChanged'
+                    },
+                    currentDirecroryName: {
+                        type: String,
+                        computed: '_getDirectoryName(currentPath)'
+                    },
+                    restOrigin: {
+                        type: String
+                    },
+                    data: {
+                        type: Array,
+                        observer:'__changedData'
+                    },
+                    mvFiles: {
+                        type: Array
+                    },
+
+                    /**
+                    * e.g.:
+                    * auth = 'Basic YW5vbnltb3VzOm5vcGFzc3dvcmQ'
+                    */
+                    auth: {
+                        type: String,
+                        notify: true
+                    },
+                    loading: {
+                        type: Boolean,
+                        value: true
+                    }
+                }
+            }
+            ready()
+            {
+                super.ready();
 
                 Polymer.RenderStatus.afterNextRender(this, () => {
                     this._startingPath = this.currentPath;
@@ -143,93 +168,101 @@ Use to move a file in dcache-view
                         this.__getData(this.currentPath);   
                     } else {
                         var ls = new MsLs(this.currentPath,this.data);
-                        Polymer.dom(this.root).querySelector('#listHolder').appendChild(ls);
+                        this.shadowRoot.querySelector('#listHolder').appendChild(ls);
                         this.loading=false;
                     }
                 });
-            },
-            back: function()
+            }
+            back()
             {
                 if (this.currentPath != "/") {
-                    this.loading=true;
-                    var x = this.currentPath;
-                    var li = x.lastIndexOf("/");
-                    var pt = li==0 ? "/": x.substring(0, li);
+                    this.loading = true;
+                    const pt = this.currentPath.lastIndexOf("/") === 0 ?
+                        "/": this.currentPath.substring(0, this.currentPath.lastIndexOf("/"));
                     this.__getData(pt);
                 }
-            },
-            _getDirectoryName: function(path)
+            }
+            _getDirectoryName(path)
             {
-                return (path == "/") ? "Root" : path.substring(path.lastIndexOf("/")+1, path.length);
-            },
-
-            __getData: function(path)
+                return (path == "/") ? "Root" : 
+                    path.substring(path.lastIndexOf("/") + 1, path.length);
+            }
+            __getData(path)
             {
                 this.currentPath = path;
-                var namespace = document.createElement('dcache-namespace');
+                let namespace = new DcacheNamespace();
                 namespace.auth = this.auth;
-                var d = this;
-                namespace.ls({
-                    url: d.restOrigin == null ? location.origin: d.restOrigin,
+                const options = {
+                    url: this.restOrigin == null ? location.origin: this.restOrigin,
                     path: path,
                     children: true
-                });
-                namespace.promise.then(
-                    function (request) {
-                        var children = [];
+                }
+                namespace.ls(options);
+                namespace.promise.then((request) => {
+                        let children = [];
                         children = request.response.children;
-                        d._isDir(children);
-                    }
-                ).catch(
-                    function (err) {
-                        d._handleError(err.message);
-                    }
-                );
+                        this._isDir(children);
+                }).catch(
+                    (err) => {this._handleError(err.message);
+                });
                 namespace = document.createElement('span');
-            },
-            _isDir: function(arr)
+            }
+            _isDir(arr)
             {
-                var z = [];
+                let z = [];
                 z = arr.filter(this._lsDirFilter);
                 if (this._startingPath == this.currentPath) {
                     z = this._removeMovingItems(z);
                 }
                 this.data = z;
-            },
-            _lsDirFilter: function(item)
+            }
+            _lsDirFilter(item)
             {
                 return item.fileType == "DIR";
-            },
-            _removeMovingItems: function(arr) 
+            }
+            _removeMovingItems(arr)
             {
                 this.mvFiles.forEach(function(el) {
                     if (el.fileType == "DIR") {
-                        var index = arr.findIndex(x => (x.fileName===el.fileName));
+                        const index = arr.findIndex(x => (x.fileName===el.fileName));
                         if (index != -1) {
                             arr.splice(index, 1);
                         }
                     }
                 });
                 return arr;
-            },
-            __changedData: function(n,o)
+            }
+            __changedData(n,o)
             {
-                var ls = new MsLs(this.currentPath,n);
-                Polymer.dom(this.root).querySelector('#listHolder').innerHTML = ""
-                Polymer.dom(this.root).querySelector('#listHolder').appendChild(ls);
+                const ls = new MsLs(this.currentPath, n);
+                ls.addEventListener('mv-ls-list-path', (e) => {
+                    this.__getData(e.detail.path);
+                });
+                ls.addEventListener('mv-ls-item-selected', (e) => {
+                    const item = e.detail.item;
+                    if (item !== null || item !== undefined || 
+                            this._startingPath !== this.currentPath) {
+                        this.$.moveBtn.disabled = false;
+                    }
+                    if ((item === null || item === undefined) && 
+                            this._startingPath === this.currentPath) {
+                        this.$.moveBtn.disabled = true;
+                    }
+                });
+                this.shadowRoot.querySelector('#listHolder').innerHTML = ""
+                this.shadowRoot.querySelector('#listHolder').appendChild(ls);
                 this.loading = false;
-            },
-            move: function()
+            }
+            move()
             {
-                var d = this;
-                this.mvFiles.forEach(function(el) {
-                    d._move(el.fileName);
+                this.mvFiles.forEach((el) => {
+                    this._move(el.fileName);
                 })
-            },
-            _move: function(name)
+            }
+            _move(name)
             {
                 var path = this._startingPath == "/"? "/" + name : this._startingPath + "/" + name;
-                var destFolder = Polymer.dom(this.root).querySelector('mv-ls').selectedItems;
+                var destFolder = this.shadowRoot.querySelector('mv-ls').selectedItems;
                 var dest = destFolder == null ?
                             this.currentPath + "/" + name : this.currentPath + "/"+destFolder.fileName + "/" + name;
                 var namespace = document.createElement('dcache-namespace');
@@ -250,17 +283,17 @@ Use to move a file in dcache-view
                     }
                 ).catch(
                     function (err) {
-                        d._handleError(err.message); //FIXME: not correct, tidy up later.
+                        d._handleError(err.message); //FIXME: incorrect, tidy up later.
                         d._moveErrorHandler(err.message);
                     }
                 );
-            },
-            create: function()
+            }
+            create()
             {
                 this.querySelector('#moveBtn').disabled = true;
                 this.querySelector('#createBtn').disabled = true;
                 var c = document.createElement("create-directory");
-                var lsHolder = Polymer.dom(this.root).querySelector('#listHolder');
+                var lsHolder = this.shadowRoot.querySelector('#listHolder');
                 var d = this; 
                 c.dirFullPath = this.currentPath;
                 c.addEventListener('create',function(e) {
@@ -290,18 +323,18 @@ Use to move a file in dcache-view
                         name: name
                     });
                 });
-                c.addEventListener('close',function(e) {
+                c.addEventListener('close', function(e) {
                     lsHolder.innerHTML = "";
                     d.querySelector('#createBtn').disabled = false; 
                     d.__getData(this.dirFullPath);
                 });
                 lsHolder.innerHTML = "";
                 lsHolder.appendChild(c);
-            },
-            __currentPathChanged: function(n,o)
+            }
+            __currentPathChanged(n,o)
             {
-                var b = Polymer.dom(this.root).querySelector('mv-ls') == null ? null :
-                    Polymer.dom(this.root).querySelector('mv-ls').selectedItems;
+                var b = this.shadowRoot.querySelector('mv-ls') == null ? null :
+                            this.shadowRoot.querySelector('mv-ls').selectedItems;
                 if (this._startingPath == n && b == null) {
                     this.$.moveBtn.disabled = true;
                 } else {
@@ -312,51 +345,52 @@ Use to move a file in dcache-view
                 } else {
                     this.$.backBtn.style.visibility = "visible";
                 }
-            },
-            _handleError: function(err)
+            }
+            _handleError(err)
             {
-                var div = document.createElement("div");
-                var h3 = document.createElement("h3");
+                let div = document.createElement("div");
+                let h3 = document.createElement("h3");
                 h3.innerHTML = "Something is really wrong with your current request :(";
                 h3.style.marginTop = "30px";
                 div.style.textAlign = "center";
                 div.appendChild(h3);
-                var code = document.createElement("code");
+                let code = document.createElement("code");
                 code.innerHTML = err;
                 div.appendChild(code);
-                Polymer.dom(this.root).querySelector('#listHolder').innerHTML = "";
-                Polymer.dom(this.root).querySelector('#listHolder').appendChild(div);
-                this.querySelector('#moveBtn').disabled = true;
-                this.querySelector('#createBtn').disabled = true;
-            },
+                this.shadowRoot.querySelector('#listHolder').innerHTML = "";
+                this.shadowRoot.querySelector('#listHolder').appendChild(div);
+                this.$.moveBtn.disabled = true;
+                this.$.createBtn.disabled = true;
+            }
             /**
              * @event move
              */
-            _moveHandler: function(e)
+            _moveHandler(e)
             {
-                this.fire('move', {response: e});
-            },
+                this.dispatchEvent(new CustomEvent('move', {detail: {response: e}}));
+            }
             /**
              * @event error
              */
-            _moveErrorHandler: function(e)
+            _moveErrorHandler(e)
             {
-                this.fire('error', {error: e});
-            },
+                this.dispatchEvent(new CustomEvent('error', {detail: {error: e}}));
+            }
             /**
              * @event move-create
              */
-            _moveCreateHandler: function(e)
+            _moveCreateHandler(e)
             {
-                this.fire('move-create', {name: e});
-            },
+                this.dispatchEvent(new CustomEvent('move-create', {detail: {name: e}}));
+            }
             /**
              * @event dismiss
              */
-            _close: function(e)
+            _close(e)
             {
-                this.fire('dismiss', {e: e});
+                this.dispatchEvent(new CustomEvent('dismiss', {detail: {e: e}}));
             }
-        });
+        };
+        window.customElements.define(MoveFile.is, MoveFile);
     </script>
 </dom-module>
