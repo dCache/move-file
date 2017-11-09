@@ -15,7 +15,7 @@
 `move-file`
 Use to move a file in dcache-view
 
-@demo demo/index.html 
+@demo demo/index.html
 -->
 
 <dom-module id="move-file">
@@ -101,8 +101,8 @@ Use to move a file in dcache-view
                 <paper-spinner active="{{loading}}"></paper-spinner>
                 <div id="listHolder"></div>
             </div>
-            <paper-fab id="createBtn" icon="move-icons:create-dir" 
-                    title="create new directory" on-tap="create"></paper-fab>
+            <paper-fab id="createBtn" icon="move-icons:create-dir"
+                       title="create new directory" on-tap="create"></paper-fab>
             <div class="buttons">
                 <paper-button id="cancelBtn" on-tap="_close">Cancel</paper-button>
                 <paper-button id="moveBtn" on-tap="move" disabled>Move here</paper-button>
@@ -144,9 +144,9 @@ Use to move a file in dcache-view
                     },
 
                     /**
-                    * e.g.:
-                    * auth = 'Basic YW5vbnltb3VzOm5vcGFzc3dvcmQ'
-                    */
+                     * e.g.:
+                     * auth = 'Basic YW5vbnltb3VzOm5vcGFzc3dvcmQ'
+                     */
                     auth: {
                         type: String,
                         notify: true
@@ -165,7 +165,7 @@ Use to move a file in dcache-view
                     this._startingPath = this.currentPath;
                     this.$.moveBtn.disabled = true;
                     if (this.data === null || this.data === undefined) {
-                        this.__getData(this.currentPath);   
+                        this.__getData(this.currentPath);
                     } else {
                         const ls = new MsLs(this.currentPath,this.data);
                         this.shadowRoot.querySelector('#listHolder').appendChild(ls);
@@ -177,14 +177,14 @@ Use to move a file in dcache-view
             {
                 if (this.currentPath !== "/") {
                     this.loading = true;
-                    const pt = this.currentPath.lastIndexOf("/") === 0 ? "/": 
+                    const pt = this.currentPath.lastIndexOf("/") === 0 ? "/":
                         this.currentPath.substring(0, this.currentPath.lastIndexOf("/"));
                     this.__getData(pt);
                 }
             }
             _getDirectoryName(path)
             {
-                return (path == "/") ? "Root" : 
+                return (path === "/") ? "Root" :
                     path.substring(path.lastIndexOf("/") + 1, path.length);
             }
             __getData(path)
@@ -193,15 +193,13 @@ Use to move a file in dcache-view
                 let namespace = new DcacheNamespace();
                 namespace.auth = this.auth;
                 const options = {
-                    url: this.restOrigin === null ? location.origin: this.restOrigin,
+                    url: this.restOrigin === undefined ? location.origin : this.restOrigin,
                     path: path,
                     children: true
-                }
+                };
                 namespace.ls(options);
                 namespace.promise.then((request) => {
-                        let children = [];
-                        children = request.response.children;
-                        this._isDir(children);
+                    this._isDir(request.response.children);
                 }).catch((err) => {this._handleError(err.message);});
                 namespace = document.createElement('span');
             }
@@ -216,14 +214,14 @@ Use to move a file in dcache-view
             }
             _lsDirFilter(item)
             {
-                return item.fileType == "DIR";
+                return item.fileType === "DIR";
             }
             _removeMovingItems(arr)
             {
                 this.mvFiles.forEach(function(el) {
-                    if (el.fileType == "DIR") {
+                    if (el.fileType === "DIR") {
                         const index = arr.findIndex(x => (x.fileName===el.fileName));
-                        if (index != -1) {
+                        if (index !== -1) {
                             arr.splice(index, 1);
                         }
                     }
@@ -238,16 +236,16 @@ Use to move a file in dcache-view
                 });
                 ls.addEventListener('mv-ls-item-selected', (e) => {
                     const item = e.detail.item;
-                    if (item !== null || item !== undefined || 
-                            this._startingPath !== this.currentPath) {
+                    if (item !== null || item !== undefined ||
+                        this._startingPath !== this.currentPath) {
                         this.$.moveBtn.disabled = false;
                     }
-                    if ((item === null || item === undefined) && 
-                            this._startingPath === this.currentPath) {
+                    if ((item === null || item === undefined) &&
+                        this._startingPath === this.currentPath) {
                         this.$.moveBtn.disabled = true;
                     }
                 });
-                this.shadowRoot.querySelector('#listHolder').innerHTML = ""
+                this.shadowRoot.querySelector('#listHolder').innerHTML = "";
                 this.shadowRoot.querySelector('#listHolder').appendChild(ls);
                 this.loading = false;
             }
@@ -259,28 +257,28 @@ Use to move a file in dcache-view
             }
             _move(name)
             {
-                const path = this._startingPath === "/" ? 
+                const path = this._startingPath === "/" ?
                     `/${name}` : `${this._startingPath}/${name}`;
-                const destFolder = 
+                const destFolder =
                     this.shadowRoot.querySelector('mv-ls').selectedItems;
                 const dest = destFolder === null ?
-                        `${this.currentPath}/${name}` : 
-                        `${this.currentPath}/${destFolder.fileName}/${name}`;
+                    `${this.currentPath}/${name}` :
+                    `${this.currentPath}/${destFolder.fileName}/${name}`;
                 const namespace = document.createElement('dcache-namespace');
                 namespace.auth = this.auth;
                 const options = {
-                    url: this.restOrigin === null ? 
-                        `${location.origin}/api/v1/namespace` : 
+                    url: this.restOrigin === undefined ?
+                        `${location.origin}/api/v1/namespace` :
                         `${this.restOrigin}/api/v1/namespace`,
                     path: path,
                     destination: dest
                 };
                 namespace.mv(options);
                 namespace.promise.then(() => {
-                    const x = destFolder === null ? this.currentPath : 
+                    const x = destFolder === null ? this.currentPath :
                         this.currentPath + `/${destFolder.fileName}`;
                     const res = {
-                        sourceDirName: this._getDirectoryName(this._startingPath), 
+                        sourceDirName: this._getDirectoryName(this._startingPath),
                         targetDirName: this._getDirectoryName(x)
                     };
                     this._moveHandler(res);
@@ -297,7 +295,7 @@ Use to move a file in dcache-view
                 c.header = false;
                 const lsHolder = this.shadowRoot.querySelector('#listHolder');
                 c.dirFullPath = this.currentPath;
-                c.addEventListener('create',(e) => {
+                c.addEventListener('create', (e) => {
                     const name = e.detail.newFolderName;
                     const namespace = document.createElement('dcache-namespace');
                     namespace.auth = this.auth;
@@ -314,7 +312,7 @@ Use to move a file in dcache-view
                         this._moveErrorHandler(err.message);
                     });
                     const options = {
-                        url: this.restOrigin === null ? `${location.origin}/api/v1/namespace` : 
+                        url: this.restOrigin === undefined ? `${location.origin}/api/v1/namespace` :
                             `${this.restOrigin}/api/v1/namespace`,
                         path: c.dirFullPath,
                         name: name
@@ -323,7 +321,7 @@ Use to move a file in dcache-view
                 });
                 c.addEventListener('close', (e) => {
                     lsHolder.innerHTML = "";
-                    this.shadowRoot.querySelector('#createBtn').disabled = false; 
+                    this.shadowRoot.querySelector('#createBtn').disabled = false;
                     this.__getData(c.dirFullPath);
                 });
                 lsHolder.innerHTML = "";
@@ -332,12 +330,8 @@ Use to move a file in dcache-view
             __currentPathChanged(n,o)
             {
                 const b = this.shadowRoot.querySelector('mv-ls') === null ? null :
-                            this.shadowRoot.querySelector('mv-ls').selectedItems;
-                if (this._startingPath === n && b === null) {
-                    this.$.moveBtn.disabled = true;
-                } else {
-                    this.$.moveBtn.disabled = false;
-                }
+                    this.shadowRoot.querySelector('mv-ls').selectedItems;
+                this.$.moveBtn.disabled = this._startingPath === n && b === null;
                 if (n === "/") {
                     this.$.backBtn.style.visibility = "hidden";
                 } else {
@@ -388,7 +382,7 @@ Use to move a file in dcache-view
             {
                 this.dispatchEvent(new CustomEvent('dismiss', {detail: {e: e}}));
             }
-        };
+        }
         window.customElements.define(MoveFile.is, MoveFile);
     </script>
 </dom-module>
