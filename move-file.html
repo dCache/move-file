@@ -164,10 +164,10 @@ Use to move a file in dcache-view
                 Polymer.RenderStatus.afterNextRender(this, () => {
                     this._startingPath = this.currentPath;
                     this.$.moveBtn.disabled = true;
-                    if (this.data == null || this.data === undefined) {
+                    if (this.data === null || this.data === undefined) {
                         this.__getData(this.currentPath);   
                     } else {
-                        var ls = new MsLs(this.currentPath,this.data);
+                        const ls = new MsLs(this.currentPath,this.data);
                         this.shadowRoot.querySelector('#listHolder').appendChild(ls);
                         this.loading=false;
                     }
@@ -175,10 +175,10 @@ Use to move a file in dcache-view
             }
             back()
             {
-                if (this.currentPath != "/") {
+                if (this.currentPath !== "/") {
                     this.loading = true;
-                    const pt = this.currentPath.lastIndexOf("/") === 0 ?
-                        "/": this.currentPath.substring(0, this.currentPath.lastIndexOf("/"));
+                    const pt = this.currentPath.lastIndexOf("/") === 0 ? "/": 
+                        this.currentPath.substring(0, this.currentPath.lastIndexOf("/"));
                     this.__getData(pt);
                 }
             }
@@ -193,7 +193,7 @@ Use to move a file in dcache-view
                 let namespace = new DcacheNamespace();
                 namespace.auth = this.auth;
                 const options = {
-                    url: this.restOrigin == null ? location.origin: this.restOrigin,
+                    url: this.restOrigin === null ? location.origin: this.restOrigin,
                     path: path,
                     children: true
                 }
@@ -202,16 +202,14 @@ Use to move a file in dcache-view
                         let children = [];
                         children = request.response.children;
                         this._isDir(children);
-                }).catch(
-                    (err) => {this._handleError(err.message);
-                });
+                }).catch((err) => {this._handleError(err.message);});
                 namespace = document.createElement('span');
             }
             _isDir(arr)
             {
                 let z = [];
                 z = arr.filter(this._lsDirFilter);
-                if (this._startingPath == this.currentPath) {
+                if (this._startingPath === this.currentPath) {
                     z = this._removeMovingItems(z);
                 }
                 this.data = z;
@@ -261,86 +259,86 @@ Use to move a file in dcache-view
             }
             _move(name)
             {
-                var path = this._startingPath == "/"? "/" + name : this._startingPath + "/" + name;
-                var destFolder = this.shadowRoot.querySelector('mv-ls').selectedItems;
-                var dest = destFolder == null ?
-                            this.currentPath + "/" + name : this.currentPath + "/"+destFolder.fileName + "/" + name;
-                var namespace = document.createElement('dcache-namespace');
+                const path = this._startingPath === "/" ? 
+                    `/${name}` : `${this._startingPath}/${name}`;
+                const destFolder = 
+                    this.shadowRoot.querySelector('mv-ls').selectedItems;
+                const dest = destFolder === null ?
+                        `${this.currentPath}/${name}` : 
+                        `${this.currentPath}/${destFolder.fileName}/${name}`;
+                const namespace = document.createElement('dcache-namespace');
                 namespace.auth = this.auth;
-                var d = this;
-                namespace.mv({
-                    url: d.restOrigin == null ? location.origin + "/api/v1/namespace" : 
-                        d.restOrigin+ "/api/v1/namespace",
+                const options = {
+                    url: this.restOrigin === null ? 
+                        `${location.origin}/api/v1/namespace` : 
+                        `${this.restOrigin}/api/v1/namespace`,
                     path: path,
                     destination: dest
+                };
+                namespace.mv(options);
+                namespace.promise.then(() => {
+                    const x = destFolder === null ? this.currentPath : 
+                        this.currentPath + `/${destFolder.fileName}`;
+                    const res = {
+                        sourceDirName: this._getDirectoryName(this._startingPath), 
+                        targetDirName: this._getDirectoryName(x)
+                    };
+                    this._moveHandler(res);
+                }).catch((err) => {
+                    this._handleError(err.message); //FIXME: incorrect, tidy up later.
+                    this._moveErrorHandler(err.message);
                 });
-                namespace.promise.then(
-                    () => {
-                        let x = destFolder == null ? this.currentPath : this.currentPath + "/"+destFolder.fileName;
-                        let res = {sourceDirName: this._getDirectoryName(this._startingPath), 
-                            targetDirName: this._getDirectoryName(x)};
-                        this._moveHandler(res);
-                    }
-                ).catch(
-                    function (err) {
-                        d._handleError(err.message); //FIXME: incorrect, tidy up later.
-                        d._moveErrorHandler(err.message);
-                    }
-                );
             }
             create()
             {
-                this.querySelector('#moveBtn').disabled = true;
-                this.querySelector('#createBtn').disabled = true;
-                var c = document.createElement("create-directory");
-                var lsHolder = this.shadowRoot.querySelector('#listHolder');
-                var d = this; 
+                this.shadowRoot.querySelector('#moveBtn').disabled = true;
+                this.shadowRoot.querySelector('#createBtn').disabled = true;
+                const c = document.createElement("create-directory");
+                c.header = false;
+                const lsHolder = this.shadowRoot.querySelector('#listHolder');
                 c.dirFullPath = this.currentPath;
-                c.addEventListener('create',function(e) {
-                    var name = e.detail.newFolderName;
-                    var namespace = document.createElement('dcache-namespace');
-                    namespace.auth = d.auth;
-                    namespace.promise.then(
-                        function (r) {
-                            lsHolder.innerHTML = "";
-                            d.querySelector('#createBtn').disabled = false;
-                            var path = d.currentPath == "/" ? "/"+name : d.currentPath + "/"+name;
-                            if (d.currentPath == d._startingPath) {
-                                d._moveCreateHandler(name);
-                            }
-                            d.__getData(path);
+                c.addEventListener('create',(e) => {
+                    const name = e.detail.newFolderName;
+                    const namespace = document.createElement('dcache-namespace');
+                    namespace.auth = this.auth;
+                    namespace.promise.then((r) => {
+                        lsHolder.innerHTML = "";
+                        this.shadowRoot.querySelector('#createBtn').disabled = false;
+                        const path = this.currentPath === "/" ? `/${name}` : `${this.currentPath}/${name}`;
+                        if (this.currentPath === this._startingPath) {
+                            this._moveCreateHandler(name);
                         }
-                    ).catch(
-                        function (err) {
-                            d._handleError(err.message);
-                            d._moveErrorHandler(err.message);
-                        }
-                    );
-                    namespace.mkdir({
-                        url: d.restOrigin == null ? location.origin + "/api/v1/namespace" : 
-                            d.restOrigin+ "/api/v1/namespace",
+                        this.__getData(path);
+                    }).catch((err) => {
+                        this._handleError(err.message);
+                        this._moveErrorHandler(err.message);
+                    });
+                    const options = {
+                        url: this.restOrigin === null ? `${location.origin}/api/v1/namespace` : 
+                            `${this.restOrigin}/api/v1/namespace`,
                         path: c.dirFullPath,
                         name: name
-                    });
+                    };
+                    namespace.mkdir(options);
                 });
-                c.addEventListener('close', function(e) {
+                c.addEventListener('close', (e) => {
                     lsHolder.innerHTML = "";
-                    d.querySelector('#createBtn').disabled = false; 
-                    d.__getData(this.dirFullPath);
+                    this.shadowRoot.querySelector('#createBtn').disabled = false; 
+                    this.__getData(c.dirFullPath);
                 });
                 lsHolder.innerHTML = "";
                 lsHolder.appendChild(c);
             }
             __currentPathChanged(n,o)
             {
-                var b = this.shadowRoot.querySelector('mv-ls') == null ? null :
+                const b = this.shadowRoot.querySelector('mv-ls') === null ? null :
                             this.shadowRoot.querySelector('mv-ls').selectedItems;
-                if (this._startingPath == n && b == null) {
+                if (this._startingPath === n && b === null) {
                     this.$.moveBtn.disabled = true;
                 } else {
                     this.$.moveBtn.disabled = false;
                 }
-                if (n == "/") {
+                if (n === "/") {
                     this.$.backBtn.style.visibility = "hidden";
                 } else {
                     this.$.backBtn.style.visibility = "visible";
@@ -348,13 +346,13 @@ Use to move a file in dcache-view
             }
             _handleError(err)
             {
-                let div = document.createElement("div");
-                let h3 = document.createElement("h3");
+                const div = document.createElement("div");
+                const h3 = document.createElement("h3");
                 h3.innerHTML = "Something is really wrong with your current request :(";
                 h3.style.marginTop = "30px";
                 div.style.textAlign = "center";
                 div.appendChild(h3);
-                let code = document.createElement("code");
+                const code = document.createElement("code");
                 code.innerHTML = err;
                 div.appendChild(code);
                 this.shadowRoot.querySelector('#listHolder').innerHTML = "";
