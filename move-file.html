@@ -173,6 +173,20 @@ Use to move a file in dcache-view
                     }
                 });
             }
+            __encodePath(path)
+            {
+                if (path === "/") {
+                    return path;
+                }
+                const arr = (path.replace(/^\/+|\/+$/g, '')).split("/");
+                if (arr.length === 0) {
+                    return encodeURIComponent(arr[0]);
+                }
+                arr.forEach(function(element, index) {
+                    arr[index] = encodeURIComponent(element);
+                });
+                return `/${arr.join('/')}`;
+            }
             back()
             {
                 if (this.currentPath !== "/") {
@@ -194,7 +208,7 @@ Use to move a file in dcache-view
                 namespace.auth = this.auth;
                 const options = {
                     url: this.restOrigin === undefined ? location.origin : this.restOrigin,
-                    path: path,
+                    path: this.__encodePath(path),
                     children: true
                 };
                 namespace.ls(options);
@@ -270,7 +284,7 @@ Use to move a file in dcache-view
                     url: this.restOrigin === undefined ?
                         `${location.origin}/api/v1/namespace` :
                         `${this.restOrigin}/api/v1/namespace`,
-                    path: path,
+                    path: this.__encodePath(path),
                     destination: dest
                 };
                 namespace.mv(options);
@@ -314,7 +328,7 @@ Use to move a file in dcache-view
                     const options = {
                         url: this.restOrigin === undefined ? `${location.origin}/api/v1/namespace` :
                             `${this.restOrigin}/api/v1/namespace`,
-                        path: c.dirFullPath,
+                        path: this.__encodePath(c.dirFullPath),
                         name: name
                     };
                     namespace.mkdir(options);
