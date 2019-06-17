@@ -10,7 +10,7 @@
     "iron-iconset-svg": "PolymerElements/iron-iconset-svg#^2.0.0",
     "iron-icon": "PolymerElements/iron-icon#^2.0.0",
     "iron-list": "PolymerElements/iron-list#^2.0.0",
-    "dcache-namespace": "dcacheElements/dcache-namespace#^0.0.8",
+    "dcache-namespace": "dcacheElements/dcache-namespace#^0.0.9",
     "file-icon": "dcacheElements/file-icon#^0.0.5",
     "paper-spinner": "PolymerElements/paper-spinner#^2.0.0",
     "create-directory": "dCacheElements/create-directory#^0.0.4",
