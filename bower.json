@@ -13,7 +13,7 @@
     "file-icon": "dcache-elements/file-icon#^0.0.3",
     "paper-spinner": "PolymerElements/paper-spinner#^1.2.1",
     "paper-toolbar": "PolymerElements/paper-toolbar#^1.1.7",
-    "create-directory": "dcache-elements/create-directory#^0.0.3",
+    "create-directory": "dCache/create-directory#^0.0.3",
     "paper-tooltip": "PolymerElements/paper-tooltip#^1.1.3",
     "paper-fab": "PolymerElements/paper-fab#^1.2.1"
   },
