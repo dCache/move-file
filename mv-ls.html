@@ -1,7 +1,8 @@
-<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../polymer/polymer-element.html">
 
 <link rel="import" href="../iron-list/iron-list.html">
 <link rel="import" href="../file-icon/file-icon.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
 <dom-module id="mv-ls">
     <template>
         <style>
@@ -28,78 +29,89 @@
                 outline: 0;
             }
         </style>
-        <p>{{contentMessage}}</p>
-        <iron-list class="flex" items="[[directories]]" selected-items="{{selectedItems}}" selection-enabled>
+        <p id="msg">{{contentMessage}}</p>
+        <iron-list class="flex" id="feLs" items="[[directories]]" 
+                   selected-items="{{selectedItems}}" selection-enabled>
             <template>
-                <ls-file class$="[[_computedClass(selected)]]" current-path$="[[path]]"
-                        name$="[[item.fileName]]" mime-type$="[[item.fileMimeType]]"></ls-file>
+                <ls-file class$="[[_computedClass(selected)]]" 
+                         current-path$="[[path]]" 
+                         name$="[[item.fileName]]" 
+                         mime-type$="[[item.fileMimeType]]" 
+                         selected="[[selected]]"></ls-file>
             </template>
-            
         </iron-list>
     </template>
     <script>
-        MsLs = Polymer({
-            is: 'mv-ls',
-            properties: {
-                path: {
-                    type: String,
-                    notify: true
-                },
-                directories: {
-                    type: Array,
-                    notify: true,
-                    observer:'__changedData'
-                },
-                selectedItems:{
-                    type: Object,
-                    notify: true,
-                    observer:'__selectedItemsChanged'
-                },
-                noDir:{type:Number},
-                contentMessage: {
-                    type:String,
-                    computed: '__computedMessage(noDir)'
-                }
-            },
-            factoryImpl: function(path,directories) {
+        class MsLs extends Polymer.Element
+        {
+            constructor(path, directories)
+            {
+                super();
                 this.path = path;
                 this.directories = directories;
                 this.noDir = directories.length;
-            },
-            __changedData: function(){
-                this.querySelector('iron-list').fire('iron-resize');
-            },
-            _computedClass: function(isSelected)
+            }
+            static get is()
+            {
+                return 'mv-ls';
+            }
+            static get properties()
+            {
+                return {
+                    path: {
+                        type: String,
+                        notify: true
+                    },
+                    directories: {
+                        type: Array,
+                        notify: true,
+                        observer:'__changedData'
+                    },
+                    selectedItems: {
+                        type: Object,
+                        notify: true,
+                        observer:'__selectedItemsChanged'
+                    },
+                    noDir: {
+                        type:Number
+                    },
+                    contentMessage: {
+                        type:String,
+                        computed: '__computedMessage(noDir)'
+                    }
+                }
+            }
+            __changedData(n,o)
+            {
+                this.$.feLs.fire('iron-resize');
+            }
+            _computedClass(isSelected)
 			{
-				var classes = 'item';
+				let classes = 'item';
 				if (isSelected) {
 					classes += ' selected';
 				} 
 				this.updateStyles();
 				return classes;
-			},
-            __selectedItemsChanged: function(n,o)
-            {                
-                var a = document.querySelector('move-file');
-                if (n != null || n != undefined || a._startingPath != a.currentPath) {
-                    a.querySelector('#moveBtn').disabled = false;
-                }
-                if (n == null && a._startingPath == a.currentPath){
-                    a.querySelector('#moveBtn').disabled = true;
-                }
-            },
-            __computedMessage: function(n)
+			}
+            __selectedItemsChanged(n,o)
             {
-                if (n == 0){
-                    this.querySelector('p').style.textAlign = "center";
+                this.dispatchEvent(new CustomEvent('mv-ls-item-selected', 
+                        {detail: {item: n}}));
+            }
+            __computedMessage(n)
+            {
+                if (n === 0) {
+                    this.$.msg.style.textAlign = "center";
                     return "No folder in this directory";
-                } else if (n == 1){
-                    return "There is 1 folder in this directory";;
+                } else if (n === 1) {
+                    return "There is 1 folder in this directory";
                 } else {
-                    return "There are " + n + " folders in this directory";
+                    return `There are ${n} folders in this directory`;
                 }
-            },
-        });
+            }
+        }
+        window.customElements.define(MsLs.is, MsLs);
     </script>
 </dom-module>
 
@@ -118,65 +130,102 @@
                 align-items: center;
                 border-bottom: 1px solid #e5e5e5;
             }
-            file-icon {
+            .mv-file-icon {
                 margin-right: 18px; 
                 margin-left: 5px;
-                fill: rgb(97,97,97) !important;
+            }
+            .unselected {
+                fill: rgb(79, 195, 247) !important;
+            }
+            .selected {
+                fill: #fff !important;
             }
             #open {
                 visibility: hidden;
             }
         </style>
         <div id="file">
-            <file-icon mime-type="[[mimeType]]"></file-icon>
+            <file-icon class$="[[_computedClass(selected)]]" 
+                       mime-type="[[mimeType]]"></file-icon>
             <span class="flex">[[name]]</span>
-            <paper-icon-button id="open" icon="move-icons:open" on-tap="_open"></paper-icon-button>
+            <paper-icon-button id="open" 
+                               icon="move-icons:open" 
+                               on-tap="_open"></paper-icon-button>
         </div>
     </template>
     <script>
-        Polymer({
-            is : 'ls-file',
-            properties: {
-                name: {
-                    type: String
-                },
-                mimeType: {
-                    type: String
-                },
-                currentPath:{
-                    type: String
+        class LsFile extends Polymer.Element
+        {
+            constructor()
+            {
+                super();
+            }
+            static get is()
+            {
+                return 'ls-file';
+            }
+            connectedCallback()
+            {
+                super.connectedCallback();
+                this.addEventListener('dblclick', this._open);
+                this.addEventListener('mouseover', this._mouseOver);
+                this.addEventListener('mouseleave', this._mouseLeave);
+            }
+            disconnectedCallback()
+            {
+                super.disconnectedCallback();
+                this.removeEventListener('dblclick', this._open);
+                this.removeEventListener('mouseover', this._mouseOver);
+                this.removeEventListener('mouseleave', this._mouseLeave);
+            }
+            static get properties()
+            {
+                return {
+                    name: {
+                        type: String
+                    },
+                    mimeType: {
+                        type: String
+                    },
+                    currentPath:{
+                        type: String
+                    },
+                    selected:{
+                        type: Boolean,
+                        notify: true
+                    }
                 }
-            },
-            attached:function()
+            }
+            _open(e)
             {
-                this.listen(this.$.open, 'tap', '_open');
-                this.listen(this, 'dblclick', '_open');
-                this.listen(this, 'mouseover', '_mouseOver');
-                this.listen(this, 'mouseleave', '_mouseLeave');
-            },
-            detached: function()
-            {
-                this.unlisten(this.$.open, 'tap', '_open');
-                this.unlisten(this, 'dblclick', '_open');
-                this.unlisten(this, 'mouseover', '_mouseOver');
-                this.unlisten(this, 'mouseleave', '_mouseLeave');
-            },
-            _open: function(e)
-            {
-                var a = document.querySelector('move-file');
-                var path = this.currentPath=="/" ? "/" + this.name: this.currentPath + "/" + this.name;
-                a.__getData(path);
-            },
-            _mouseOver: function(e)
+                const path = this.currentPath === "/" 
+                        ? `/${this.name}` : `${this.currentPath}/${this.name}`;
+                this.dispatchEvent(new CustomEvent('mv-ls-list-path', 
+                        {composed: true, detail: {path: path}})
+                );
+            }
+            _mouseOver(e)
             {
                 this.$.open.style.visibility = "visible";
                 this.updateStyles();
-            },
-            _mouseLeave: function(e)
+            }
+            _mouseLeave(e)
             {
                 this.$.open.style.visibility = "hidden";
                 this.updateStyles();
-            },
-        })
+            }
+            _computedClass(isSelected)
+            {
+                let classes = 'mv-file-icon';
+                if (isSelected) {
+                    classes += ' selected';
+                } else {
+                    classes += ' unselected';
+                }
+                this.updateStyles();
+                return classes;
+            }
+        }
+        window.customElements.define(LsFile.is, LsFile);
     </script>
 </dom-module>
