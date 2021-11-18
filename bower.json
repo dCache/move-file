@@ -14,7 +14,7 @@
     "file-icon": "dCache/file-icon#^0.0.5",
     "paper-spinner": "PolymerElements/paper-spinner#^2.0.0",
     "paper-toolbar": "PolymerElements/paper-toolbar#^2.0.0",
-    "create-directory": "dCache/create-directory#^0.0.4",
+    "create-directory": "dCache/create-directory#^0.0.5",
     "paper-tooltip": "PolymerElements/paper-tooltip#^2.0.0",
     "paper-fab": "PolymerElements/paper-fab#^2.0.0"
   },
