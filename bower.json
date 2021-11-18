@@ -11,7 +11,7 @@
     "iron-icon": "PolymerElements/iron-icon#^2.0.0",
     "iron-list": "PolymerElements/iron-list#^2.0.0",
     "dcache-namespace": "dCache/dcache-namespace#^0.1.3",
-    "file-icon": "dCache/file-icon#^0.0.5",
+    "file-icon": "dCache/file-icon#^0.0.6",
     "paper-spinner": "PolymerElements/paper-spinner#^2.0.0",
     "paper-toolbar": "PolymerElements/paper-toolbar#^2.0.0",
     "create-directory": "dCache/create-directory#^0.0.5",
